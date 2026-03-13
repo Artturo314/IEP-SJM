@@ -1,0 +1,43 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret_password_change_me
+      POSTGRES_DB: school_db
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend-node:
+    build: ./backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgres://admin:secret_password_change_me@postgres:5432/school_db
+      - PORT=3000
+    depends_on:
+      - postgres
+
+  ai-fastapi:
+    build: ./ai-service
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://admin:secret_password_change_me@postgres:5432/school_db
+    depends_on:
+      - postgres
+
+  frontend-react:
+    build: ./frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend-node
+
+volumes:
+  pg_data:
